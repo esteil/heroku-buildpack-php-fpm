@@ -3,6 +3,7 @@
 
 set -e
 set -o pipefail
+set -x
 
 # START CONFIG
 NGINX_VERSION=1.0.14
@@ -49,6 +50,11 @@ if [ ! -d ./php ]; then
   mkdir -p ./php && cd ./php
   curl --silent --max-time 60 --location $PHP_URL | tar xz
 fi
+
+
+echo "-----> Configuration files"
+
+pwd
 
 # Config files
 cp $LP_DIR/conf/nginx.conf.erb nginx/conf/nginx.conf.erb
