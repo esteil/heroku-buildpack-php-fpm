@@ -57,9 +57,9 @@ echo "-----> Configuration files"
 pwd
 
 # Config files
-cp $LP_DIR/conf/nginx.conf.erb nginx/conf/nginx.conf.erb
-cp $LP_DIR/conf/php.ini php/php.ini
-cp $LP_DIR/conf/php-fpm.conf php/etc/php-fpm.conf
+cp $LP_DIR/conf/nginx.conf.erb $BUILD_DIR/nginx/conf/nginx.conf.erb
+cp $LP_DIR/conf/php.ini $BUILD_DIR/php/php.ini
+cp $LP_DIR/conf/php-fpm.conf $BUILD_DIR/php/etc/php-fpm.conf
 
 # setup web script. php-cgi relies on PHP_FCGI_CHILDREN=5 PHP_FCGI_MAX_REQUESTS=1000, set in 'bin/release'
 echo "-----> Installing boot script"
