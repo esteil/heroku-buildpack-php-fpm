@@ -49,7 +49,7 @@ http {
 
     # Status. /status.html uses /status
     location ~ ^/(status|ping)$ {
-      include         /app/vendor/nginx/conf/fastcgi_params;
+      include         /app/nginx/conf/fastcgi_params;
       fastcgi_param   HTTPS on; # force SSL
       fastcgi_pass    unix:/tmp/php-fpm.socket;
       fastcgi_param   SCRIPT_FILENAME $document_root$fastcgi_script_name;
@@ -76,7 +76,7 @@ http {
     }
 
     location ~ .*\.php$ {
-      include         /app/vendor/nginx/conf/fastcgi_params;
+      include         /app/nginx/conf/fastcgi_params;
       fastcgi_param   HTTPS on; # force SSL
       fastcgi_pass    unix:/tmp/php-fpm.socket;
       fastcgi_param   SCRIPT_FILENAME $document_root$fastcgi_script_name;
