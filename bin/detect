@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# this pack is valid for apps with an index.php in the root
+if [ -f $1/index.php ]; then
+  echo "PHP"
+  exit 0
+else
+  echo "No"
+  exit 1
+fi

@@ -1,0 +1,77 @@
+#!/bin/bash
+# Usage: bin/compile <build-dir> <cache-dir>
+
+set -e
+set -o pipefail
+
+# START CONFIG
+NGINX_VERSION=1.0.14
+PHP_VERSION=5.4.0
+S3_BUCKET=heroku-buildpack-php-fpm
+# END CONFIG
+
+#
+NGINX_URL="https://s3.amazonaws.com/${S3_BUCKET}/nginx-${NGINX_VERSION}-heroku.tar.gz"
+PHP_URL="https://s3.amazonaws.com/${S3_BUCKET}/php-${PHP_VERSION}-with-fpm-heroku.tar.gz"
+#
+
+function indent() {
+  c='s/^/       /'
+  case $(uname) in
+    Darwin) sed -l "$c";;
+    *)      sed -u "$c";;
+  esac
+}
+
+BUILD_DIR=$1
+CACHE_DIR=$2
+LP_DIR=`cd $(dirname $0); cd ..; pwd`
+mkdir -p $BUILD_DIR $CACHE_DIR
+
+# Nginx
+echo "-----> Installing Nginx"
+cd ${BUILD_DIR}
+if [ ! -d ./nginx ]; then
+  echo "-----> Bundling Nginx v${NGINX_VERSION}"
+  mkdir -p ./nginx && cd ./nginx
+  curl --silent --max-time 60 --location $NGINX_URL | tar xz
+fi
+
+# PHP
+echo "-----> Installing PHP"
+cd ${BUILD_DIR}
+if [ ! -d ./php ]; then
+  echo "-----> Bundling PHP v${PHP_VERSION}"
+  mkdir -p ./php && cd ./php
+  curl --silent --max-time 60 --location $PHP_URL | tar xz
+fi
+
+# Config files
+cp $LP_DIR/conf/nginx.conf.erb /app/nginx/conf/nginx.conf.erb
+cp $LP_DIR/conf/php.ini /app/php/php.ini
+cp $LP_DIR/conf/php-fpm.conf /app/php/etc/php-fpm.conf
+
+# setup web script. php-cgi relies on PHP_FCGI_CHILDREN=5 PHP_FCGI_MAX_REQUESTS=1000, set in 'bin/release'
+echo "-----> Installing boot script"
+cd $BUILD_DIR
+cat >>boot.sh <<EOF
+#!/usr/bin/env bash
+
+echo "Booting nginx"
+
+cp /app/php/share/php/fpm/status.html /app/status.html
+erb /app/nginx/conf/nginx.conf.erb > /app/nginx/conf/nginx.conf
+
+touch /app/nginx/logs/access.log /app/nginx/logs/error.log
+mkdir -p client_body_temp fastcgi_temp proxy_temp scgi_temp uwsgi_temp
+(tail -f -n 0 /app/nginx/logs/*.log &)
+
+export LD_LIBRARY_PATH=/app/php/ext
+export PHP_INI_SCAN_DIR=/app/www
+
+php-fpm
+nginx
+EOF
+chmod +x boot.sh
+
+echo "-----> Done with compile"
